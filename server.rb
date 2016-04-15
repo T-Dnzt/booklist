@@ -69,6 +69,18 @@ namespace '/api/v1' do
         halt 400, { message: 'Invalid JSON' }.to_json
       end
     end
+
+    def book
+      @book ||= Book.where(id: params[:id]).first
+    end
+
+    def halt_if_not_found!
+      halt(404, { message: 'Book Not Found'}.to_json) unless book
+    end
+
+    def serialize(book)
+      BookSerializer.new(book).to_json
+    end
   end
 
   get '/books' do
@@ -82,35 +94,24 @@ namespace '/api/v1' do
   end
 
   get '/books/:id' do |id|
-    book = Book.where(id: id).first
-    halt(404, { message: 'Book Not Found'}.to_json) unless book
-    BookSerializer.new(book).to_json
+    halt_if_not_found!
+    serialize(book)
   end
 
   post '/books' do
     book = Book.new(json_params)
-    if book.save
-      response.headers['Location'] = "#{base_url}/api/v1/books/#{book.id}"
-      status 201
-    else
-      status 422
-      body BookSerializer.new(book).to_json
-    end
+    halt 422, serialize(book) unless book.save
+    response.headers['Location'] = "#{base_url}/api/v1/books/#{book.id}"
+    status 201
   end
 
   patch '/books/:id' do |id|
-    book = Book.where(id: id).first
-    halt(404, { message: 'Book Not Found'}.to_json) unless book
-    if book.update_attributes(json_params)
-      BookSerializer.new(book).to_json
-    else
-      status 422
-      body BookSerializer.new(book).to_json
-    end
+    halt_if_not_found!
+    halt 422, serialize(book) unless book.update_attributes(json_params)
+    serialize(book)
   end
 
   delete '/books/:id' do |id|
-    book = Book.where(id: id).first
     book.destroy if book
     status 204
   end
