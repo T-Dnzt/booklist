@@ -1,5 +1,6 @@
 # server.rb
 require 'sinatra'
+require "sinatra/namespace"
 require 'mongoid'
 
 # DB Setup
@@ -24,4 +25,8 @@ end
 # Endpoints
 get '/' do
   'Welcome to BookList!'
+end
+
+namespace '/api/v1' do
+
 end
