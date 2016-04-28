@@ -1,5 +1,6 @@
 # server.rb
 require 'sinatra'
+require 'sinatra/reloader' if development?
 require "sinatra/namespace"
 require 'mongoid'
 
@@ -86,7 +87,7 @@ namespace '/api/v1' do
   get '/books' do
     books = Book.all
 
-    [:title, :isbn, :author].each do |filter|
+    %i(title isbn author).each do |filter|
       books = books.send(filter, params[filter]) if params[filter]
     end
 
@@ -112,6 +113,7 @@ namespace '/api/v1' do
   end
 
   delete '/books/:id' do |id|
+    halt_if_not_found!
     book.destroy if book
     status 204
   end
